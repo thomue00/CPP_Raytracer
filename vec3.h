@@ -1,7 +1,7 @@
-#pragma once
-#include <math.h>
+#ifndef VEC3H
+#define VEC3H
 #include <stdlib.h>
-#include <iostream>
+#include <math.h>
 
 class vec3 {
 
@@ -139,3 +139,37 @@ inline vec3 unit_vector(vec3 v) {
 	return v / v.length();
 }
 
+// Random Math Stuff
+static uint32_t s_RndState = 1;
+
+static uint32_t XorShift32()
+{
+    uint32_t x = s_RndState;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 15;
+    s_RndState = x;
+    return x;
+}
+
+float random_float() {
+	return (XorShift32() & 0xFFFFFF) / 16777216.0f;
+}
+
+vec3 random_in_unit_sphere() {
+
+	vec3 p;
+	do {
+		p = 2.0 * vec3(random_float(), random_float(), random_float()) - vec3(1, 1, 1);
+	} while (p.squared_length() >= 1.0);
+	return p;
+}
+
+vec3 random_in_unit_disc() {
+	vec3 p;
+	do {
+		p = 2.0*vec3(random_float(), random_float(), 0) - vec3(1, 1, 0);
+	} while (dot(p, p) >= 1.0);
+	return p;
+}
+#endif
