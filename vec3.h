@@ -34,6 +34,9 @@ public:
 	inline float squared_length() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
 	inline void make_unit_vector();
 
+	inline void Clamp01();
+	inline void Clamp(float lower,float upper);
+
 	float e[3];
 };
 
@@ -50,6 +53,26 @@ inline std::ostream& operator<<(std::ostream &os, const vec3 &t) {
 inline void vec3::make_unit_vector() {
 	float k = 1.0 / sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
 	e[0] *= k; e[1] *= k; e[2] *= k;
+}
+
+inline float ffmin(float a, float b) { return a < b ? a : b; }
+inline float ffmax(float a, float b) { return a > b ? a : b; }
+inline float clip(float n, float lower, float upper) {
+	return ffmax(lower, ffmin(n, upper));
+}
+
+inline void vec3::Clamp01() {
+
+	e[0] = clip(e[0], 0, 1);
+	e[1] = clip(e[1], 0, 1);
+	e[2] = clip(e[2], 0, 1);
+}
+
+inline void vec3::Clamp(float lower, float upper) {
+
+	e[0] = clip(e[0], lower, upper);
+	e[1] = clip(e[1], lower, upper);
+	e[2] = clip(e[2], lower, upper);
 }
 
 inline vec3 operator+(const vec3 &v1, const vec3 &v2) {
@@ -85,7 +108,8 @@ inline float dot(const vec3 &v1, const vec3 &v2) {
 }
 
 inline vec3 cross(const vec3 &v1, const vec3 &v2) {
-	return vec3((v1.e[1] * v2.e[2] - v1.e[2] * v2.e[1]),
+	return vec3(
+		(v1.e[1] * v2.e[2] - v1.e[2] * v2.e[1]),
 		(-(v1.e[0] * v2.e[2] - v1.e[2] * v2.e[0])),
 		(v1.e[0] * v2.e[1] - v1.e[1] * v2.e[0]));
 }
@@ -140,7 +164,7 @@ inline vec3 unit_vector(vec3 v) {
 }
 
 // Random Math Stuff
-static uint32_t s_RndState = 1;
+thread_local static uint32_t s_RndState = 1;
 
 static uint32_t XorShift32()
 {

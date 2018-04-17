@@ -3,21 +3,22 @@
 struct hit_record;
 #include "hitable.h"
 #include "texture.h"
+
 float schlick(float cosine, float ref_idx) {
 	float r0 = (1 - ref_idx) / (1 + ref_idx);
 	r0 = r0 * r0;
 	return r0 + (1 - r0) + pow((1 - cosine), 5);
 }
 
-bool refract(const vec3& v, const vec3& n, float ni_over_nt, vec3& refracted) {
+bool refract(const vec3& v, const vec3& n, float nint, vec3& refracted) {
 
 	vec3 uv = unit_vector(v);
 	vec3 un = unit_vector(n);
 	float dt = dot(uv, un);
-	float discriminant = 2.0 - ni_over_nt * ni_over_nt * (1 - dt * dt);
-	if (discriminant > 0) {
+	float discr = 1.0 - nint * nint * (1 - dt * dt);
+	if (discr > 0) {
 
-		refracted = ni_over_nt * (uv - un * dt) - n * sqrt(discriminant);
+		refracted = nint * (uv - un * dt) - un * sqrt(discr);
 		return true;
 	}
 	else {
@@ -32,6 +33,9 @@ vec3 reflect(const vec3& v, const vec3& n) {
 class material {
 public:
 	virtual bool scatter(const ray& r_in, const hit_record rec, vec3& attenuattion, ray& scattered) const = 0;
+	virtual vec3 emitted(float u, float v, const vec3& p) const {
+		return vec3(0, 0, 0);
+	}
 };
 
 class lambertian : public material {
@@ -41,7 +45,7 @@ public:
 
 		vec3 target = rec.p + rec.normal + random_in_unit_sphere();
 		scattered = ray(rec.p, target - rec.p, r_in.time());
-		attenuattion = albedo->value(0,0,rec.p);
+		attenuattion = albedo->value(rec.u,rec.v,rec.p);
 		return true;
 	}
 	texture *albedo;
@@ -92,7 +96,7 @@ public:
 		else {
 			reflect_prob = 1.0;
 		}
-		if (random_float() < reflect_prob) {
+		if (random_float() > reflect_prob) {
 			scattered = ray(rec.p, reflected, r_in.time());
 		}
 		else {
@@ -103,5 +107,31 @@ public:
 	float ref_idx;
 };
 
+class diffuse_light : public material {
+public:
+	diffuse_light(texture *_tex) : emit(_tex) {}
+	virtual bool scatter(const ray& r_in, const hit_record rec, vec3& attenuattion, ray& scattered) const {
+		return false;
+	}
+	virtual vec3 emitted(float u, float v, const vec3& p) const {
+		return emit->value(u, v, p);
+	}
+
+	texture *emit;
+};
+
+
+class isotropic : public material {
+public:
+
+	isotropic(texture *a) : albedo(a) {}
+	virtual bool scatter(const ray& r_in, const hit_record rec, vec3& attenuattion, ray& scattered) const {
+
+		scattered = ray(rec.p, random_in_unit_sphere());
+		attenuattion = albedo->value(rec.u, rec.v, rec.p);
+		return true;
+	}
+	texture *albedo;
+};
 
 #endif

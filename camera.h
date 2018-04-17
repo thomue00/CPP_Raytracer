@@ -3,9 +3,12 @@
 
 #define M_PI           3.14159265358979323846 
 
+#include "ray.h"
+
 class camera {
 
 public:
+	camera() {}
 	camera(vec3 lookfrom, vec3 lookat, vec3 vup, float vfov, float aspect, float aperture, float focus_dist, float t0, float t1) {
 
 		time0 = t0;

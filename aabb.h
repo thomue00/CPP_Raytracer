@@ -1,12 +1,9 @@
 #ifndef AABBH
 #define AABBH
 
-#include "vec3.h"
 #include "ray.h"
+#include "hitable.h"
 
-// AABB
-inline float ffmin(float a, float b) { return a < b ? a : b; }
-inline float ffmax(float a, float b) { return a > b ? a : b; }
 
 class aabb {
 
@@ -44,6 +41,25 @@ public:
 
 		return true;
 	}
+
+	float area() const {
+
+		float a = _max.x() - _min.x();
+		float b = _max.y() - _min.y();
+		float c = _max.z() - _min.z();
+		return 2 * (a*b + b * c + c * a);
+	}
+
+	int longest_axis() const {
+
+		float a = _max.x() - _min.x();
+		float b = _max.y() - _min.y();
+		float c = _max.z() - _min.z();
+		if (a > b && a > c) return 0;
+		else if (b > c) return 1;
+		else return 2;
+	}
+
 	vec3 _min, _max;
 };
 
